@@ -29,6 +29,14 @@
 - [docs/discovery/EXPERIMENTS.md](docs/discovery/EXPERIMENTS.md) — backlog экспериментов.
 - [docs/discovery/COMPETITIVE_ANALYSIS.md](docs/discovery/COMPETITIVE_ANALYSIS.md) — категории конкурентов и рамка исследования.
 
+## UX Specification
+
+- [docs/ux/UX_PRINCIPLES.md](docs/ux/UX_PRINCIPLES.md) — правила проектирования пользовательского опыта.
+- [docs/ux/INFORMATION_ARCHITECTURE.md](docs/ux/INFORMATION_ARCHITECTURE.md) — навигация и структура продукта.
+- [docs/ux/USER_FLOWS.md](docs/ux/USER_FLOWS.md) — основные пользовательские и бизнес-потоки.
+- [docs/ux/SCREEN_CATALOG.md](docs/ux/SCREEN_CATALOG.md) — каталог экранов consumer, business и admin.
+- [docs/ux/SCREEN_STATES.md](docs/ux/SCREEN_STATES.md) — состояния экранов, чеков, наград и кампаний.
+
 ## Проверка гипотез и бизнес
 
 - [METRICS_AND_HYPOTHESES.md](METRICS_AND_HYPOTHESES.md) — гипотезы и метрики.
