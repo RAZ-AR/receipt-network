@@ -18,6 +18,17 @@
 - [NON_FUNCTIONAL_REQUIREMENTS.md](NON_FUNCTIONAL_REQUIREMENTS.md) — качество, безопасность и надежность.
 - [DATA_MODEL.md](DATA_MODEL.md) — ключевые сущности.
 
+## Product Discovery
+
+- [docs/discovery/PERSONAS.md](docs/discovery/PERSONAS.md) — рабочие типы пользователей и партнеров.
+- [docs/discovery/JTBD.md](docs/discovery/JTBD.md) — работы, для которых пользователи и бизнес нанимают продукт.
+- [docs/discovery/USER_STORIES.md](docs/discovery/USER_STORIES.md) — продуктовые истории и приоритеты.
+- [docs/discovery/CUSTOMER_JOURNEY.md](docs/discovery/CUSTOMER_JOURNEY.md) — ключевые пользовательские и бизнес-пути.
+- [docs/discovery/VALUE_PROPOSITION.md](docs/discovery/VALUE_PROPOSITION.md) — ценностное предложение.
+- [docs/discovery/ASSUMPTIONS.md](docs/discovery/ASSUMPTIONS.md) — непроверенные предположения.
+- [docs/discovery/EXPERIMENTS.md](docs/discovery/EXPERIMENTS.md) — backlog экспериментов.
+- [docs/discovery/COMPETITIVE_ANALYSIS.md](docs/discovery/COMPETITIVE_ANALYSIS.md) — категории конкурентов и рамка исследования.
+
 ## Проверка гипотез и бизнес
 
 - [METRICS_AND_HYPOTHESES.md](METRICS_AND_HYPOTHESES.md) — гипотезы и метрики.
@@ -27,7 +38,6 @@
 
 ## Управление знаниями
 
-- [PRODUCT_ASSUMPTIONS.md](PRODUCT_ASSUMPTIONS.md) — непроверенные предположения и способы проверки.
 - [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) — вопросы, которые нужно закрыть.
 - [PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md) — идеи и будущая работа.
 - [DECISIONS.md](DECISIONS.md) — принятые решения.
