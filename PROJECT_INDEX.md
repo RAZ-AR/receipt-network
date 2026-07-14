@@ -36,6 +36,13 @@
 - [docs/ux/USER_FLOWS.md](docs/ux/USER_FLOWS.md) — основные пользовательские и бизнес-потоки.
 - [docs/ux/SCREEN_CATALOG.md](docs/ux/SCREEN_CATALOG.md) — каталог экранов consumer, business и admin.
 - [docs/ux/SCREEN_STATES.md](docs/ux/SCREEN_STATES.md) — состояния экранов, чеков, наград и кампаний.
+- [docs/ux/wireframes/LOW_FIDELITY_WIREFRAMES.md](docs/ux/wireframes/LOW_FIDELITY_WIREFRAMES.md) — черновая компоновка основных экранов.
+- [docs/ux/PROTOTYPE_PLAN.md](docs/ux/PROTOTYPE_PLAN.md) — план кликабельного прототипа и пользовательского теста.
+
+## Design Foundation
+
+- [docs/design/DESIGN_FOUNDATIONS.md](docs/design/DESIGN_FOUNDATIONS.md) — характер интерфейса, иерархия, motion и trust rules.
+- [docs/design/COMPONENT_INVENTORY.md](docs/design/COMPONENT_INVENTORY.md) — переиспользуемые UI-компоненты и их состояния.
 
 ## Проверка гипотез и бизнес
 
