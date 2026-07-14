@@ -51,6 +51,10 @@
 - currency
 - receipt_number
 - fiscal_id
+- qr_raw_payload
+- verification_source (taxcore_api / ocr_fallback / manual)
+- verification_url
+- ocr_confidence_score (только для ocr_fallback)
 - fraud_score
 - created_at
 

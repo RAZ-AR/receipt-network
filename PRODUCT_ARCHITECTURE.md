@@ -28,10 +28,10 @@ Receipt Uploaded
 Камера, галерея, пакетное сканирование, quality check и очередь загрузки.
 
 ## Receipt Recognition
-OCR, продавец, дата, сумма, номер, QR, позиции и confidence score.
+QR-first: декодирование фискального QR и запрос к официальному verification API (TaxCore/PURS) как основной источник продавца, даты, суммы, номера, позиций и налогов. OCR — fallback для нечитаемого QR и нефискальных чеков, с confidence score.
 
 ## Receipt Verification
-Обязательные поля, срок, уникальность, фискальная проверка, допустимость и ручная проверка.
+Для QR-пути — сверка с ответом TaxCore/PURS как основной сигнал подлинности. Для OCR-пути — обязательные поля, confidence score и повышенная вероятность ручной проверки. Общие для обоих путей: срок, уникальность, допустимость, ручная проверка.
 
 ## Fraud & Risk
 Image fingerprint, device risk, duplicate detection, лимиты, risk score и блокировки.
@@ -148,7 +148,7 @@ ReceiptVerified
 - четкие доменные границы;
 - единый transactional core;
 - внутренние domain events;
-- отдельные workers для OCR и уведомлений;
+- отдельные workers для TaxCore verification, OCR fallback и уведомлений;
 - ledger для баллов;
 - audit log для критических операций.
 
