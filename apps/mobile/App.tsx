@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -8,14 +8,20 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
+import { AuthScreen } from "./src/screens/AuthScreen";
+import { ScannerScreen } from "./src/screens/ScannerScreen";
+import { ResultScreen } from "./src/screens/ResultScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import type { DockTab } from "./src/components/Dock";
 import { colors, fontFamily } from "./src/theme";
 
-// Sprint-1 slice: Onboarding + Home are real; the rest are placeholders that
-// the next screens replace one by one (see src/screens/index.ts registry).
+// Sprint-1 flow: Onboarding -> Scanner -> Result -> Home, plus Auth.
+// Wallet / Rewards / History / Profile are still placeholders.
 type RootStackParamList = {
   Onboarding: undefined;
+  Auth: undefined;
+  Scanner: undefined;
+  Result: undefined;
   Home: undefined;
   Placeholder: { name: string };
 };
@@ -32,11 +38,7 @@ function Placeholder({ route }: NativeStackScreenProps<RootStackParamList, "Plac
 }
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
-    Manrope_500Medium,
-    Manrope_700Bold,
-    Manrope_800ExtraBold,
-  });
+  const [fontsLoaded] = useFonts({ Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold });
   if (!fontsLoaded) return null;
 
   return (
@@ -50,22 +52,48 @@ export default function App() {
           <Stack.Screen name="Onboarding">
             {({ navigation }) => (
               <OnboardingScreen
-                onScan={() => navigation.navigate("Placeholder", { name: "Skener" })}
-                onSignIn={() => navigation.navigate("Placeholder", { name: "Prijava" })}
+                onScan={() => navigation.navigate("Scanner")}
+                onSignIn={() => navigation.navigate("Auth")}
               />
             )}
           </Stack.Screen>
+
+          <Stack.Screen name="Auth">
+            {({ navigation }) => (
+              <AuthScreen onSubmit={() => navigation.navigate("Home")} onBack={() => navigation.goBack()} />
+            )}
+          </Stack.Screen>
+
+          <Stack.Screen name="Scanner" options={{ presentation: "fullScreenModal" }}>
+            {({ navigation }) => (
+              <ScannerScreen
+                onClose={() => navigation.goBack()}
+                onScanned={() => navigation.replace("Result")}
+              />
+            )}
+          </Stack.Screen>
+
+          <Stack.Screen name="Result">
+            {({ navigation }) => (
+              <ResultScreen
+                state="SUCCESS"
+                onContinue={() => navigation.reset({ index: 0, routes: [{ name: "Home" }] })}
+              />
+            )}
+          </Stack.Screen>
+
           <Stack.Screen name="Home">
             {({ navigation }) => (
               <HomeScreen
-                onNavigate={(tab: DockTab) =>
-                  tab === "Home"
-                    ? undefined
-                    : navigation.navigate("Placeholder", { name: tab })
-                }
+                onNavigate={(tab: DockTab) => {
+                  if (tab === "Home") return;
+                  if (tab === "Scan") navigation.navigate("Scanner");
+                  else navigation.navigate("Placeholder", { name: tab });
+                }}
               />
             )}
           </Stack.Screen>
+
           <Stack.Screen name="Placeholder" component={Placeholder} />
         </Stack.Navigator>
       </NavigationContainer>

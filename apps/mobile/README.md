@@ -9,11 +9,13 @@ Expo (React Native) app for Beleg. Implements the soft-glass design from [DESIGN
 - `src/theme/tokens.ts` — design tokens (colors, aura, gradients, radii, typography, shadow/glass notes). Start here.
 - `src/theme/index.ts` — token re-export + `raisedShadow` and `fontFamily` helpers.
 - `src/components/` — `Aura`, `NeoSurface`, `GlassButton`, `ProgressRing`, `Dock` (soft-glass building blocks).
-- `src/screens/OnboardingScreen.tsx`, `src/screens/HomeScreen.tsx` — the first two real screens.
+- `src/screens/` — `Onboarding`, `Auth`, `Scanner`, `Result` (state-driven), `Home`.
 - `src/screens/index.ts` — screen registry mirroring the prototype (tabs = dock, rest stacked).
-- `App.tsx` — native-stack navigator (Onboarding → Home + placeholders); loads Manrope via `@expo-google-fonts/manrope`.
+- `App.tsx` — native-stack navigator wiring the flow Onboarding → Scanner → Result → Home (plus Auth); loads Manrope via `@expo-google-fonts/manrope`.
 
-Next screens to build (Sprint 1): Auth, Scanner, Result + states.
+`ResultScreen` renders any `ReceiptResultState` (SUCCESS + the 4 error states) from `@beleg/shared-types`.
+
+Next screens to build: Wallet, Rewards (two tabs + filters), History, Profile, Lottery, Review, Redemption, Notifications, Batch.
 
 ## Soft-glass in React Native
 
