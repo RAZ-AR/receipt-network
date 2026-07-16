@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
-import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle, ActivityIndicator } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CameraView, useCameraPermissions, scanFromURLAsync } from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { Dock, DockTab } from "../components/Dock";
 import { GlassButton } from "../components/GlassButton";
@@ -9,8 +9,17 @@ import { isFiscalReceiptUrl } from "../api/taxcore";
 import { colors, fontFamily, s, DOCK_CLEARANCE } from "../theme";
 
 /**
- * QR-first scanner (ADR-P-013): the camera opens straight away and looks for
- * the fiscal QR. A non-fiscal code is rejected inline rather than sent on.
+ * QR-first scanner (ADR-P-013).
+ *
+ * A fiscal QR carries ~700 characters, so it is a very high-density code. The
+ * live preview stream decodes ordinary QR codes but not this one, so the
+ * reliable path is the platform's own scanner — DataScannerViewController
+ * (VisionKit) on iOS 16+, Google's code scanner on Android — which handles
+ * dense codes far better. Live scanning stays as the fast path.
+ *
+ * Note on focus: expo-camera's `autofocus` means "focus once, then lock" when
+ * set to "on"; the default "off" is continuous autofocus, which is what a
+ * scanner wants. So it is deliberately left unset.
  */
 export function ScannerScreen({
   onClose,
@@ -25,52 +34,48 @@ export function ScannerScreen({
   const [torch, setTorch] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
   const [seen, setSeen] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const camera = useRef<CameraView>(null);
-  // Barcodes fire continuously — only act on the first valid one.
+  // Codes fire continuously — only act on the first valid one.
   const handled = useRef(false);
 
   const accept = (data: string) => {
+    if (handled.current) return;
     handled.current = true;
     onScanned(data);
   };
 
   const reject = (data: string) => {
-    // Show what was actually read: a rejected code is otherwise a silent
-    // dead end, and the raw value is what tells us why.
+    // A rejected code is otherwise a silent dead end; the raw value says why.
     setSeen(data.slice(0, 90));
     setHint("Ovo nije fiskalni QR kod sa računa.");
   };
 
-  // Fast path: the live preview stream decodes simple codes instantly.
-  const onBarcode = ({ data }: { data: string }) => {
-    if (handled.current || busy) return;
-    if (!isFiscalReceiptUrl(data)) return reject(data);
-    accept(data);
+  // Results from the platform scanner arrive on this event.
+  useEffect(() => {
+    const sub = CameraView.onModernBarcodeScanned((r) => {
+      if (handled.current) return;
+      if (!isFiscalReceiptUrl(r.data)) {
+        reject(r.data);
+        return;
+      }
+      void CameraView.dismissScanner();
+      accept(r.data);
+    });
+    return () => sub.remove();
+  });
+
+  const openPreciseScanner = () => {
+    setHint(null);
+    void CameraView.launchScanner({
+      barcodeTypes: ["qr"],
+      isHighlightingEnabled: true,
+      isGuidanceEnabled: true,
+    });
   };
 
-  /**
-   * Reliable path for the fiscal QR. It carries ~700 chars, so it is a very
-   * high-density code — the live preview runs at too low a resolution to
-   * resolve its modules. A full-resolution still does decode it.
-   */
-  const captureAndScan = async () => {
-    if (handled.current || busy) return;
-    setBusy(true);
-    setHint("Čitamo kod sa fotografije…");
-    try {
-      const photo = await camera.current?.takePictureAsync({ quality: 1, shutterSound: false });
-      if (!photo?.uri) throw new Error("no photo");
-      const found = await scanFromURLAsync(photo.uri, ["qr"]);
-      const hit = found.find((r) => isFiscalReceiptUrl(r.data));
-      if (hit) return accept(hit.data);
-      if (found.length > 0) return reject(found[0]!.data);
-      setHint("Nismo našli QR na fotografiji. Priđi bliže, tako da kod popuni okvir.");
-    } catch {
-      setHint("Nije uspelo čitanje. Pokušaj ponovo.");
-    } finally {
-      setBusy(false);
-    }
+  const onBarcode = ({ data }: { data: string }) => {
+    if (handled.current) return;
+    if (!isFiscalReceiptUrl(data)) return reject(data);
+    accept(data);
   };
 
   if (!permission) return <View style={styles.root} />;
@@ -94,14 +99,8 @@ export function ScannerScreen({
   return (
     <View style={styles.root}>
       <CameraView
-        ref={camera}
         style={StyleSheet.absoluteFill}
         facing="back"
-        mode="picture"
-        // expo-camera defaults autofocus to "off" on iOS. A fiscal QR carries
-        // ~700 chars, so it is dense: without focus the preview looks fine to
-        // the eye but never resolves sharply enough to decode.
-        autofocus="on"
         enableTorch={torch}
         barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
         onBarcodeScanned={onBarcode}
@@ -138,18 +137,15 @@ export function ScannerScreen({
           ) : null}
         </View>
 
-        <View style={styles.shutterRow}>
-          <Pressable onPress={captureAndScan} disabled={busy} accessibilityLabel="Slikaj kod">
-            <View style={[styles.shutter, busy && styles.shutterBusy]}>
-              {busy ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Ionicons name="camera" size={s(28)} color="#fff" />
-              )}
-            </View>
-          </Pressable>
-          <Text style={styles.shutterHint}>Ne prepoznaje sam? Slikaj kod</Text>
-        </View>
+        {CameraView.isModernBarcodeScannerAvailable ? (
+          <View style={styles.actionRow}>
+            <Pressable onPress={openPreciseScanner} style={styles.action} accessibilityLabel="Precizni skener">
+              <Ionicons name="scan" size={s(20)} color={colors.ink} />
+              <Text style={styles.actionText}>Precizni skener</Text>
+            </Pressable>
+            <Text style={styles.actionHint}>Za guste kodove sa računa</Text>
+          </View>
+        ) : null}
       </SafeAreaView>
 
       <Dock onNavigate={onNavigate} />
@@ -194,19 +190,18 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowRadius: 6,
   },
-  shutterRow: { alignItems: "center", paddingBottom: DOCK_CLEARANCE, gap: s(8) },
-  shutter: {
-    width: s(66),
-    height: s(66),
-    borderRadius: s(33),
-    backgroundColor: "rgba(255,255,255,0.22)",
-    borderWidth: 3,
-    borderColor: "rgba(255,255,255,0.9)",
+  actionRow: { alignItems: "center", paddingBottom: DOCK_CLEARANCE, gap: s(7) },
+  action: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: s(9),
+    paddingHorizontal: s(20),
+    paddingVertical: s(13),
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.92)",
   },
-  shutterBusy: { opacity: 0.6 },
-  shutterHint: {
+  actionText: { fontFamily: fontFamily.heavy, fontSize: s(14), color: colors.ink },
+  actionHint: {
     fontFamily: fontFamily.bold,
     fontSize: s(11),
     color: "rgba(255,255,255,0.9)",
