@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Beleg",
+    "slug": "beleg",
+    "scheme": "beleg",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#EAEDF5",
+    "locales": {
+      "sr": "./locales/sr.json"
+    },
+    "ios": { "supportsTablet": false },
+    "android": {
+      "adaptiveIcon": { "backgroundColor": "#EAEDF5" }
+    }
+  }
+}
