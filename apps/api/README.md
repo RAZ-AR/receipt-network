@@ -7,6 +7,10 @@ Modular monolith backend for Beleg. See [IMPLEMENTATION_PLAN.md](../../IMPLEMENT
 ## Layout
 
 ```
+prisma/
+  schema.prisma  # data layer (lives here so prisma + @prisma/client are colocated)
+scripts/
+  taxcore-spike.ts
 src/
   core/
     events/   # domain-event bus (idempotent handlers)
@@ -18,13 +22,13 @@ src/
 
 Domains talk to each other through `core/events`, not direct calls.
 
-## Getting started (once the stack is confirmed)
+## Getting started
 
 ```bash
-pnpm install
-# set DATABASE_URL in .env (see .env.example — to be added)
-pnpm prisma:generate
-pnpm prisma:migrate
+pnpm install                      # from the repo root
+cp apps/api/.env.example apps/api/.env
+pnpm prisma:generate              # verified: schema is valid, client generates
+pnpm prisma:migrate               # needs a running Postgres
 pnpm api:dev
 ```
 

@@ -11,8 +11,8 @@
   "scripts": {
     "api:dev": "pnpm --filter @beleg/api dev",
     "mobile:dev": "pnpm --filter @beleg/mobile start",
-    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
-    "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma"
+    "prisma:generate": "pnpm --filter @beleg/api exec prisma generate",
+    "prisma:migrate": "pnpm --filter @beleg/api exec prisma migrate dev"
   },
   "engines": {
     "node": ">=20"
