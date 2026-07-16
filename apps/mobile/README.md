@@ -9,13 +9,13 @@ Expo (React Native) app for Beleg. Implements the soft-glass design from [DESIGN
 - `src/theme/tokens.ts` — design tokens (colors, aura, gradients, radii, typography, shadow/glass notes). Start here.
 - `src/theme/index.ts` — token re-export + `raisedShadow` and `fontFamily` helpers.
 - `src/components/` — `Aura`, `NeoSurface`, `GlassButton`, `ProgressRing`, `Dock` (soft-glass building blocks).
-- `src/screens/` — `Onboarding`, `Auth`, `Scanner`, `Result` (state-driven), `Home`.
+- `src/screens/` — `Onboarding`, `Auth`, `Scanner`, `Result` (state-driven), `Home`, `Wallet`, `Rewards` (two tabs), `History`, `Profile`.
 - `src/screens/index.ts` — screen registry mirroring the prototype (tabs = dock, rest stacked).
-- `App.tsx` — native-stack navigator wiring the flow Onboarding → Scanner → Result → Home (plus Auth); loads Manrope via `@expo-google-fonts/manrope`.
+- `App.tsx` — native-stack navigator: flow (Onboarding → Scanner → Result → Home + Auth) and dock tabs (Home / Wallet / Rewards / History / Profile). Loads Manrope via `@expo-google-fonts/manrope`.
 
-`ResultScreen` renders any `ReceiptResultState` (SUCCESS + the 4 error states) from `@beleg/shared-types`.
+`ResultScreen` renders any `ReceiptResultState` (SUCCESS + the 4 error states) from `@beleg/shared-types`. `RewardsScreen` has the two tabs (catalog + srećke) and star-to-track, using `MAX_ACTIVE_GOALS`.
 
-Next screens to build: Wallet, Rewards (two tabs + filters), History, Profile, Lottery, Review, Redemption, Notifications, Batch.
+Next screens to build: Lottery, RewardDetails, Review, Redemption, Notifications, Batch — plus real `expo-camera` in Scanner and the TaxCore journal parser in Recognition.
 
 ## Soft-glass in React Native
 

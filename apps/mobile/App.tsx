@@ -5,28 +5,43 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts, Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold } from "@expo-google-fonts/manrope";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { NativeStackNavigationProp, NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
 import { ScannerScreen } from "./src/screens/ScannerScreen";
 import { ResultScreen } from "./src/screens/ResultScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
+import { WalletScreen } from "./src/screens/WalletScreen";
+import { RewardsScreen } from "./src/screens/RewardsScreen";
+import { HistoryScreen } from "./src/screens/HistoryScreen";
+import { ProfileScreen } from "./src/screens/ProfileScreen";
 import type { DockTab } from "./src/components/Dock";
 import { colors, fontFamily } from "./src/theme";
 
-// Sprint-1 flow: Onboarding -> Scanner -> Result -> Home, plus Auth.
-// Wallet / Rewards / History / Profile are still placeholders.
 type RootStackParamList = {
   Onboarding: undefined;
   Auth: undefined;
   Scanner: undefined;
   Result: undefined;
   Home: undefined;
+  Wallet: undefined;
+  Rewards: undefined;
+  History: undefined;
+  Profile: undefined;
   Placeholder: { name: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+// Shared dock navigation: tabs jump to their screen, Scan opens the scanner.
+function dockNav(navigation: Nav) {
+  return (tab: DockTab) => {
+    if (tab === "Scan") navigation.navigate("Scanner");
+    else navigation.navigate(tab);
+  };
+}
 
 function Placeholder({ route }: NativeStackScreenProps<RootStackParamList, "Placeholder">) {
   return (
@@ -47,7 +62,7 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator
           initialRouteName="Onboarding"
-          screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}
+          screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: "fade" }}
         >
           <Stack.Screen name="Onboarding">
             {({ navigation }) => (
@@ -66,10 +81,7 @@ export default function App() {
 
           <Stack.Screen name="Scanner" options={{ presentation: "fullScreenModal" }}>
             {({ navigation }) => (
-              <ScannerScreen
-                onClose={() => navigation.goBack()}
-                onScanned={() => navigation.replace("Result")}
-              />
+              <ScannerScreen onClose={() => navigation.goBack()} onScanned={() => navigation.replace("Result")} />
             )}
           </Stack.Screen>
 
@@ -83,15 +95,19 @@ export default function App() {
           </Stack.Screen>
 
           <Stack.Screen name="Home">
-            {({ navigation }) => (
-              <HomeScreen
-                onNavigate={(tab: DockTab) => {
-                  if (tab === "Home") return;
-                  if (tab === "Scan") navigation.navigate("Scanner");
-                  else navigation.navigate("Placeholder", { name: tab });
-                }}
-              />
-            )}
+            {({ navigation }) => <HomeScreen onNavigate={dockNav(navigation)} />}
+          </Stack.Screen>
+          <Stack.Screen name="Wallet">
+            {({ navigation }) => <WalletScreen onNavigate={dockNav(navigation)} />}
+          </Stack.Screen>
+          <Stack.Screen name="Rewards">
+            {({ navigation }) => <RewardsScreen onNavigate={dockNav(navigation)} />}
+          </Stack.Screen>
+          <Stack.Screen name="History">
+            {({ navigation }) => <HistoryScreen onNavigate={dockNav(navigation)} />}
+          </Stack.Screen>
+          <Stack.Screen name="Profile">
+            {({ navigation }) => <ProfileScreen onNavigate={dockNav(navigation)} />}
           </Stack.Screen>
 
           <Stack.Screen name="Placeholder" component={Placeholder} />
