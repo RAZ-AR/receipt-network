@@ -23,7 +23,8 @@ export function Dock({
   active,
   onNavigate,
 }: {
-  active: DockScreen;
+  /** Omitted on screens that aren't a tab (e.g. Scanner) — the pill hides. */
+  active?: DockScreen;
   onNavigate: (tab: DockTab) => void;
 }) {
   const insets = useSafeAreaInsets();
@@ -59,7 +60,7 @@ export function Dock({
     <View style={[styles.wrap, { bottom: Math.max(insets.bottom, s(10)) }]}>
       <BlurView intensity={26} tint="light" style={StyleSheet.absoluteFill} />
       <View style={styles.row} onLayout={onRowLayout}>
-        {tabWidth > 0 && (
+        {tabWidth > 0 && index >= 0 && (
           <Animated.View
             pointerEvents="none"
             style={[

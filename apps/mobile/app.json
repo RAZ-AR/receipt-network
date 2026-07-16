@@ -10,9 +10,21 @@
     "locales": {
       "sr": "./locales/sr.json"
     },
-    "ios": { "supportsTablet": false },
+    "ios": {
+      "supportsTablet": false
+    },
     "android": {
-      "adaptiveIcon": { "backgroundColor": "#EAEDF5" }
-    }
+      "adaptiveIcon": {
+        "backgroundColor": "#EAEDF5"
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Beleg koristi kameru da pro\u010dita QR kod sa ra\u010duna."
+        }
+      ]
+    ]
   }
 }

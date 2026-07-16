@@ -1,15 +1,16 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import type { ReceiptResultState } from "@beleg/shared-types";
 import { NeoSurface } from "../components/NeoSurface";
 import { Aura } from "../components/Aura";
 import { GlassButton } from "../components/GlassButton";
-import { colors, fontFamily, GradientColors } from "../theme";
+import { Dock, DockTab } from "../components/Dock";
+import { verifyReceipt, VerifiedReceipt } from "../api/taxcore";
+import { colors, fontFamily, s, GradientColors, DOCK_CLEARANCE } from "../theme";
 
 type Variant = {
-  auraColors: GradientColors;
   glyphColors: GradientColors;
   glyph: string;
   chipBg: string;
@@ -19,10 +20,9 @@ type Variant = {
   cta: string;
 };
 
-// Maps each result state to its visual config (see the states design + FR-4).
+// One config per result state (the states design + FR-4).
 const VARIANTS: Record<ReceiptResultState, Variant> = {
   SUCCESS: {
-    auraColors: ["#D6F7DB", "#C5E9FF", "#DFCFFF"],
     glyphColors: ["#A8E8B4", "#7FD4C0"],
     glyph: "✓",
     chipBg: "#D6F0E4",
@@ -32,7 +32,6 @@ const VARIANTS: Record<ReceiptResultState, Variant> = {
     cta: "Nastavi",
   },
   QR_UNREADABLE: {
-    auraColors: ["#FFE4C4", "#FFD9B0"],
     glyphColors: ["#FFD9A8", "#F5BE7E"],
     glyph: "!",
     chipBg: "#FBEBCF",
@@ -42,7 +41,6 @@ const VARIANTS: Record<ReceiptResultState, Variant> = {
     cta: "Slikaj ponovo",
   },
   INVALID: {
-    auraColors: ["#FFD3D9", "#FFCBE0"],
     glyphColors: ["#F5B8C8", "#E89AB0"],
     glyph: "✕",
     chipBg: "#FADBE2",
@@ -52,7 +50,6 @@ const VARIANTS: Record<ReceiptResultState, Variant> = {
     cta: "Skeniraj drugi račun",
   },
   TOO_OLD: {
-    auraColors: ["#FFE4C4", "#FFD9B0"],
     glyphColors: ["#FFD9A8", "#F5BE7E"],
     glyph: "⏱",
     chipBg: "#FBEBCF",
@@ -62,7 +59,6 @@ const VARIANTS: Record<ReceiptResultState, Variant> = {
     cta: "U redu",
   },
   DUPLICATE: {
-    auraColors: ["#FFD3D9", "#FFCBE0"],
     glyphColors: ["#F5B8C8", "#E89AB0"],
     glyph: "⧉",
     chipBg: "#FADBE2",
@@ -73,24 +69,54 @@ const VARIANTS: Record<ReceiptResultState, Variant> = {
   },
 };
 
+// Placeholder economics until the Points domain lands (gated by Discovery).
+const pointsFor = (total?: number) => (total ? Math.max(1, Math.round(total / 30)) : 8);
+
 export function ResultScreen({
-  state = "SUCCESS",
-  points = 8,
-  ticketNumber = "BG2200777",
+  receiptUrl,
   onContinue,
+  onNavigate,
 }: {
-  state?: ReceiptResultState;
-  points?: number;
-  ticketNumber?: string;
+  receiptUrl?: string;
   onContinue: () => void;
+  onNavigate: (t: DockTab) => void;
 }) {
+  const [state, setState] = useState<ReceiptResultState | null>(receiptUrl ? null : "SUCCESS");
+  const [receipt, setReceipt] = useState<VerifiedReceipt | null>(null);
+
+  useEffect(() => {
+    if (!receiptUrl) return;
+    let cancelled = false;
+    verifyReceipt(receiptUrl)
+      .then((r) => {
+        if (cancelled) return;
+        setReceipt(r);
+        setState(r.isValid ? "SUCCESS" : "INVALID");
+      })
+      .catch(() => !cancelled && setState("INVALID"));
+    return () => {
+      cancelled = true;
+    };
+  }, [receiptUrl]);
+
+  if (state === null) {
+    return (
+      <SafeAreaView style={styles.loading}>
+        <ActivityIndicator size="large" color={colors.ink2} />
+        <Text style={styles.loadingText}>Proveravamo račun kod TaxCore…</Text>
+      </SafeAreaView>
+    );
+  }
+
   const v = VARIANTS[state];
+  const points = pointsFor(receipt?.totalAmount);
+
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.center}>
         <View style={styles.orbWrap}>
-          <Aura size={170} style={{ top: -10, left: -10 }} />
-          <NeoSurface radius={75} style={styles.orb}>
+          <Aura size={s(170)} style={{ top: -s(10), left: -s(10) }} />
+          <NeoSurface radius={s(75)} style={styles.orb}>
             <LinearGradient colors={v.glyphColors} style={styles.glyphWrap}>
               <Text style={styles.glyph}>{v.glyph}</Text>
             </LinearGradient>
@@ -109,11 +135,15 @@ export function ResultScreen({
               <Text style={styles.points}>+{points}</Text>
               <Text style={styles.pointsUnit}>poena</Text>
             </View>
-            <NeoSurface radius={18} style={styles.ticket}>
-              <View>
-                <Text style={styles.ticketLabel}>Tvoj broj srećke</Text>
-                <Text style={styles.ticketNum}>{ticketNumber}</Text>
-              </View>
+            <NeoSurface radius={s(18)} style={styles.card}>
+              <Text style={styles.cardLabel}>Tvoj broj srećke</Text>
+              <Text style={styles.ticketNum}>BG2200777</Text>
+              {receipt?.merchant ? (
+                <Text style={styles.receiptLine}>
+                  {receipt.merchant}
+                  {receipt.totalAmount ? ` · ${receipt.totalAmount} RSD` : ""}
+                </Text>
+              ) : null}
             </NeoSurface>
           </>
         )}
@@ -122,25 +152,30 @@ export function ResultScreen({
       <View style={styles.foot}>
         <GlassButton label={v.cta} onPress={onContinue} />
       </View>
+
+      <Dock onNavigate={onNavigate} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 22 },
+  root: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: s(22) },
+  loading: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", gap: s(14) },
+  loadingText: { fontFamily: fontFamily.bold, fontSize: s(13), color: colors.ink2 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  orbWrap: { width: 150, height: 150, alignItems: "center", justifyContent: "center", marginBottom: 22 },
-  orb: { width: 150, height: 150, alignItems: "center", justifyContent: "center" },
-  glyphWrap: { width: 86, height: 86, borderRadius: 43, alignItems: "center", justifyContent: "center" },
-  glyph: { fontSize: 38, color: "#fff", fontFamily: fontFamily.heavy },
-  chip: { borderRadius: 999, paddingHorizontal: 13, paddingVertical: 6, marginBottom: 16 },
-  chipText: { fontFamily: fontFamily.heavy, fontSize: 11.5 },
-  title: { fontFamily: fontFamily.heavy, fontSize: 23, color: colors.ink, textAlign: "center", maxWidth: 280 },
-  pointsRow: { flexDirection: "row", alignItems: "flex-end", gap: 6, marginTop: 6, marginBottom: 14 },
-  points: { fontFamily: fontFamily.heavy, fontSize: 52, color: "#B99CFF" },
-  pointsUnit: { fontFamily: fontFamily.heavy, fontSize: 16, color: colors.ink2, marginBottom: 8 },
-  ticket: { width: "100%", padding: 16 },
-  ticketLabel: { fontFamily: fontFamily.bold, fontSize: 9.5, letterSpacing: 1, color: colors.ink2, textTransform: "uppercase" },
-  ticketNum: { fontFamily: fontFamily.heavy, fontSize: 19, color: colors.ink, letterSpacing: 1, marginTop: 3 },
-  foot: { paddingBottom: 24 },
+  orbWrap: { width: s(150), height: s(150), alignItems: "center", justifyContent: "center", marginBottom: s(22) },
+  orb: { width: s(150), height: s(150), alignItems: "center", justifyContent: "center" },
+  glyphWrap: { width: s(86), height: s(86), borderRadius: s(43), alignItems: "center", justifyContent: "center" },
+  glyph: { fontSize: s(38), color: "#fff", fontFamily: fontFamily.heavy },
+  chip: { borderRadius: 999, paddingHorizontal: s(13), paddingVertical: s(6), marginBottom: s(16) },
+  chipText: { fontFamily: fontFamily.heavy, fontSize: s(11.5) },
+  title: { fontFamily: fontFamily.heavy, fontSize: s(23), color: colors.ink, textAlign: "center", maxWidth: s(280) },
+  pointsRow: { flexDirection: "row", alignItems: "flex-end", gap: s(6), marginTop: s(6), marginBottom: s(14) },
+  points: { fontFamily: fontFamily.heavy, fontSize: s(52), color: "#B99CFF" },
+  pointsUnit: { fontFamily: fontFamily.heavy, fontSize: s(16), color: colors.ink2, marginBottom: s(8) },
+  card: { width: "100%", padding: s(16) },
+  cardLabel: { fontFamily: fontFamily.bold, fontSize: s(9.5), letterSpacing: 1, color: colors.ink2, textTransform: "uppercase" },
+  ticketNum: { fontFamily: fontFamily.heavy, fontSize: s(19), color: colors.ink, letterSpacing: 1, marginTop: s(3) },
+  receiptLine: { fontFamily: fontFamily.bold, fontSize: s(11.5), color: colors.ink2, marginTop: s(8) },
+  foot: { paddingBottom: DOCK_CLEARANCE },
 });

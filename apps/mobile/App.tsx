@@ -22,7 +22,7 @@ type RootStackParamList = {
   Onboarding: undefined;
   Auth: undefined;
   Scanner: undefined;
-  Result: undefined;
+  Result: { receiptUrl?: string } | undefined;
   Home: undefined;
   Wallet: undefined;
   Rewards: undefined;
@@ -77,17 +77,22 @@ export default function App() {
             )}
           </Stack.Screen>
 
-          <Stack.Screen name="Scanner" options={{ presentation: "fullScreenModal" }}>
+          <Stack.Screen name="Scanner">
             {({ navigation }) => (
-              <ScannerScreen onClose={() => navigation.goBack()} onScanned={() => navigation.replace("Result")} />
+              <ScannerScreen
+                onClose={() => navigation.goBack()}
+                onScanned={(receiptUrl) => navigation.replace("Result", { receiptUrl })}
+                onNavigate={dockNav(navigation)}
+              />
             )}
           </Stack.Screen>
 
           <Stack.Screen name="Result">
-            {({ navigation }) => (
+            {({ navigation, route }) => (
               <ResultScreen
-                state="SUCCESS"
+                receiptUrl={route.params?.receiptUrl}
                 onContinue={() => navigation.reset({ index: 0, routes: [{ name: "Home" }] })}
+                onNavigate={dockNav(navigation)}
               />
             )}
           </Stack.Screen>

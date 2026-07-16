@@ -1,55 +1,96 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { colors, fontFamily, rainbow } from "../theme";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { Ionicons } from "@expo/vector-icons";
+import { Dock, DockTab } from "../components/Dock";
+import { GlassButton } from "../components/GlassButton";
+import { isFiscalReceiptUrl } from "../api/taxcore";
+import { colors, fontFamily, s, DOCK_CLEARANCE } from "../theme";
 
 /**
- * QR-first scanner (ADR-P-013). The live camera feed will come from
- * `expo-camera` during Sprint 1 polish; here the viewfinder sits over a soft
- * gradient. The shutter simulates a successful decode + verify.
+ * QR-first scanner (ADR-P-013): the camera opens straight away and looks for
+ * the fiscal QR. A non-fiscal code is rejected inline rather than sent on.
  */
-export function ScannerScreen({ onClose, onScanned }: { onClose: () => void; onScanned: () => void }) {
+export function ScannerScreen({
+  onClose,
+  onScanned,
+  onNavigate,
+}: {
+  onClose: () => void;
+  onScanned: (url: string) => void;
+  onNavigate: (tab: DockTab) => void;
+}) {
+  const [permission, requestPermission] = useCameraPermissions();
+  const [torch, setTorch] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
+  // Barcodes fire continuously — only act on the first valid one.
+  const handled = useRef(false);
+
+  const onBarcode = ({ data }: { data: string }) => {
+    if (handled.current) return;
+    if (!isFiscalReceiptUrl(data)) {
+      setHint("Ovo nije fiskalni QR kod. Probaj QR sa dna računa.");
+      return;
+    }
+    handled.current = true;
+    onScanned(data);
+  };
+
+  if (!permission) return <View style={styles.root} />;
+
+  if (!permission.granted) {
+    return (
+      <SafeAreaView style={styles.permWrap}>
+        <Ionicons name="camera-outline" size={s(46)} color={colors.ink2} />
+        <Text style={styles.permTitle}>Potreban je pristup kameri</Text>
+        <Text style={styles.permText}>Beleg koristi kameru samo da pročita QR kod sa računa.</Text>
+        <View style={styles.permBtn}>
+          <GlassButton label="Dozvoli kameru" onPress={requestPermission} />
+        </View>
+        <Pressable onPress={onClose}>
+          <Text style={styles.permBack}>Nazad</Text>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <LinearGradient colors={["#F4F6FB", "#DDE3EF", "#CBD3E4"]} style={styles.root}>
-      <SafeAreaView style={styles.safe}>
+    <View style={styles.root}>
+      <CameraView
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        enableTorch={torch}
+        barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+        onBarcodeScanned={onBarcode}
+      />
+
+      <SafeAreaView style={styles.overlay} pointerEvents="box-none">
         <View style={styles.top}>
-          <Pressable onPress={onClose} style={styles.iconBtn}>
-            <Text style={styles.icon}>✕</Text>
+          <Pressable onPress={onClose} style={styles.iconBtn} accessibilityLabel="Zatvori">
+            <Ionicons name="close" size={s(20)} color="#fff" />
           </Pressable>
           <Text style={styles.title}>Skeniraj QR sa računa</Text>
-          <View style={styles.iconBtn} />
+          <Pressable onPress={() => setTorch((t) => !t)} style={styles.iconBtn} accessibilityLabel="Baterijska lampa">
+            <Ionicons name={torch ? "flash" : "flash-off"} size={s(20)} color="#fff" />
+          </Pressable>
         </View>
 
-        <View style={styles.frameArea}>
+        <View style={styles.frameArea} pointerEvents="none">
           <View style={styles.frame}>
             <Corner style={styles.tl} />
             <Corner style={styles.tr} />
             <Corner style={styles.bl} />
             <Corner style={styles.br} />
-            <View style={styles.glassCard}>
-              <Text style={styles.qr}>▚▚</Text>
-            </View>
           </View>
-        </View>
-
-        <Text style={styles.hint}>Uperi kameru u fiskalni QR — Beleg ga proverava kod TaxCore za par sekundi.</Text>
-
-        <View style={styles.controls}>
-          <View style={styles.ctlBtn}><Text style={styles.ctlIcon}>▤</Text></View>
-          <Pressable onPress={onScanned} style={styles.shutter}>
-            <LinearGradient
-              colors={rainbow}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.shutterInner} />
-          </Pressable>
-          <View style={styles.ctlBtn}><Text style={styles.ctlIcon}>▦</Text></View>
+          <Text style={styles.hint}>
+            {hint ?? "Uperi kameru u fiskalni QR — Beleg ga proverava kod TaxCore za par sekundi."}
+          </Text>
         </View>
       </SafeAreaView>
-    </LinearGradient>
+
+      <Dock onNavigate={onNavigate} />
+    </View>
   );
 }
 
@@ -57,38 +98,42 @@ function Corner({ style }: { style: StyleProp<ViewStyle> }) {
   return <View style={[styles.corner, style]} />;
 }
 
+const FRAME = s(230);
+
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  safe: { flex: 1, justifyContent: "space-between" },
-  top: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 18 },
-  iconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" },
-  icon: { color: colors.ink, fontSize: 15 },
-  title: { fontFamily: fontFamily.bold, fontSize: 12, color: colors.ink },
-  frameArea: { flex: 1, alignItems: "center", justifyContent: "center" },
-  frame: { width: 200, height: 200 },
-  corner: { position: "absolute", width: 34, height: 34, borderColor: "#7FB6E8" },
-  tl: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 14 },
-  tr: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 14 },
-  bl: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 14 },
-  br: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 14 },
-  glassCard: {
-    position: "absolute",
-    top: 24,
-    left: 24,
-    right: 24,
-    bottom: 24,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.35)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.6)",
+  root: { flex: 1, backgroundColor: "#0E1116" },
+  overlay: { flex: 1, justifyContent: "flex-start" },
+  top: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: s(16) },
+  iconBtn: {
+    width: s(38),
+    height: s(38),
+    borderRadius: s(19),
+    backgroundColor: "rgba(0,0,0,0.35)",
     alignItems: "center",
     justifyContent: "center",
   },
-  qr: { fontSize: 44, color: "#5A6478", opacity: 0.5 },
-  hint: { fontFamily: fontFamily.bold, fontSize: 12.5, color: colors.ink2, textAlign: "center", paddingHorizontal: 30, marginBottom: 18 },
-  controls: { flexDirection: "row", justifyContent: "space-around", alignItems: "center", paddingHorizontal: 24, paddingBottom: 28 },
-  ctlBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: "rgba(255,255,255,0.5)", borderWidth: 1, borderColor: "rgba(255,255,255,0.8)", alignItems: "center", justifyContent: "center" },
-  ctlIcon: { fontSize: 20, color: colors.ink },
-  shutter: { width: 70, height: 70, borderRadius: 35, overflow: "hidden", alignItems: "center", justifyContent: "center" },
-  shutterInner: { width: 58, height: 58, borderRadius: 29, backgroundColor: "rgba(255,255,255,0.85)", borderWidth: 2, borderColor: "rgba(255,255,255,0.95)" },
+  title: { fontFamily: fontFamily.bold, fontSize: s(13), color: "#fff" },
+  frameArea: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: DOCK_CLEARANCE },
+  frame: { width: FRAME, height: FRAME },
+  corner: { position: "absolute", width: s(38), height: s(38), borderColor: "#8FD0F5" },
+  tl: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: s(16) },
+  tr: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: s(16) },
+  bl: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: s(16) },
+  br: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: s(16) },
+  hint: {
+    fontFamily: fontFamily.bold,
+    fontSize: s(12.5),
+    color: "#fff",
+    textAlign: "center",
+    marginTop: s(22),
+    paddingHorizontal: s(34),
+    lineHeight: s(19),
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowRadius: 6,
+  },
+  permWrap: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", padding: s(28), gap: s(10) },
+  permTitle: { fontFamily: fontFamily.heavy, fontSize: s(19), color: colors.ink, marginTop: s(8) },
+  permText: { fontFamily: fontFamily.regular, fontSize: s(13), color: colors.ink2, textAlign: "center", lineHeight: s(20) },
+  permBtn: { alignSelf: "stretch", marginTop: s(10) },
+  permBack: { fontFamily: fontFamily.bold, fontSize: s(13), color: colors.ink2, padding: s(12) },
 });
