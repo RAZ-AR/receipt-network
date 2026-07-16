@@ -2,12 +2,18 @@
 
 Expo (React Native) app for Beleg. Implements the soft-glass design from [DESIGN_DIRECTION.md](../../DESIGN_DIRECTION.md); the approved layouts and flow are in the clickable prototype.
 
-> **Status:** scaffold only. No dependencies installed, no build run. The stack (Expo) is recommended in [IMPLEMENTATION_PLAN.md](../../IMPLEMENTATION_PLAN.md) but not yet fixed in an ADR.
+> **Status:** first screens written, **not yet installed or built** (no `pnpm install`, no simulator run). The stack (Expo) is recommended in [IMPLEMENTATION_PLAN.md](../../IMPLEMENTATION_PLAN.md) but not yet fixed in an ADR. Treat as a reviewable starting slice, not a running app.
 
 ## What's here
 
-- `src/theme/tokens.ts` — design tokens (colors, aura, gradients, radii, typography, shadow/glass notes) in code form. Start here.
+- `src/theme/tokens.ts` — design tokens (colors, aura, gradients, radii, typography, shadow/glass notes). Start here.
+- `src/theme/index.ts` — token re-export + `raisedShadow` and `fontFamily` helpers.
+- `src/components/` — `Aura`, `NeoSurface`, `GlassButton`, `ProgressRing`, `Dock` (soft-glass building blocks).
+- `src/screens/OnboardingScreen.tsx`, `src/screens/HomeScreen.tsx` — the first two real screens.
 - `src/screens/index.ts` — screen registry mirroring the prototype (tabs = dock, rest stacked).
+- `App.tsx` — native-stack navigator (Onboarding → Home + placeholders); loads Manrope via `@expo-google-fonts/manrope`.
+
+Next screens to build (Sprint 1): Auth, Scanner, Result + states.
 
 ## Soft-glass in React Native
 
