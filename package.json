@@ -2,7 +2,7 @@
   "name": "beleg",
   "version": "0.0.0",
   "private": true,
-  "description": "Beleg — universal receipt platform (Serbia). Modular monolith + Expo app.",
+  "description": "Beleg \u2014 universal receipt platform (Serbia). Modular monolith + Expo app.",
   "packageManager": "pnpm@9.0.0",
   "workspaces": [
     "apps/*",
@@ -12,7 +12,9 @@
     "api:dev": "pnpm --filter @beleg/api dev",
     "mobile:dev": "pnpm --filter @beleg/mobile start",
     "prisma:generate": "pnpm --filter @beleg/api exec prisma generate",
-    "prisma:migrate": "pnpm --filter @beleg/api exec prisma migrate dev"
+    "prisma:migrate": "pnpm --filter @beleg/api exec prisma migrate dev",
+    "dev": "pnpm --parallel --filter @beleg/api --filter @beleg/mobile run dev",
+    "db:start": "brew services start postgresql@16"
   },
   "engines": {
     "node": ">=20"

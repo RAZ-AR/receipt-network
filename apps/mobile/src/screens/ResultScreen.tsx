@@ -7,7 +7,7 @@ import { NeoSurface } from "../components/NeoSurface";
 import { Aura } from "../components/Aura";
 import { GlassButton } from "../components/GlassButton";
 import { Dock, DockTab } from "../components/Dock";
-import { verifyReceipt, VerifiedReceipt } from "../api/taxcore";
+import { api } from "../api/client";
 import { colors, fontFamily, s, GradientColors, DOCK_CLEARANCE } from "../theme";
 
 type Variant = {
@@ -78,9 +78,6 @@ const VARIANTS: Record<ReceiptResultState, Variant> = {
   },
 };
 
-// Placeholder economics until the Points domain lands (gated by Discovery).
-const pointsFor = (total?: number) => (total ? Math.max(1, Math.round(total / 30)) : 8);
-
 export function ResultScreen({
   receiptUrl,
   initialState,
@@ -96,16 +93,22 @@ export function ResultScreen({
   const [state, setState] = useState<ReceiptResultState | null>(
     initialState ?? (receiptUrl ? null : "SUCCESS")
   );
-  const [receipt, setReceipt] = useState<VerifiedReceipt | null>(null);
+  const [receipt, setReceipt] = useState<{ merchant?: string; totalAmount?: number } | null>(null);
+  const [points, setPoints] = useState<number | null>(null);
 
+  // The server verifies and decides — the client only reports what it scanned.
   useEffect(() => {
     if (!receiptUrl) return;
     let cancelled = false;
-    verifyReceipt(receiptUrl)
+    api.receipts.submit
+      .mutate({ receiptUrl })
       .then((r) => {
         if (cancelled) return;
-        setReceipt(r);
-        setState(r.isValid ? "SUCCESS" : "INVALID");
+        if (r.state === "SUCCESS") {
+          setReceipt({ merchant: r.merchant, totalAmount: r.totalAmount });
+          setPoints(r.points);
+        }
+        setState(r.state);
       })
       .catch(() => !cancelled && setState("INVALID"));
     return () => {
@@ -123,7 +126,6 @@ export function ResultScreen({
   }
 
   const v = VARIANTS[state];
-  const points = pointsFor(receipt?.totalAmount);
 
   return (
     <SafeAreaView style={styles.root}>
@@ -152,7 +154,7 @@ export function ResultScreen({
         {state === "SUCCESS" && (
           <>
             <View style={styles.pointsRow}>
-              <Text style={styles.points}>+{points}</Text>
+              <Text style={styles.points}>+{points ?? 0}</Text>
               <Text style={styles.pointsUnit}>poena</Text>
             </View>
             <NeoSurface radius={s(18)} style={styles.card}>
