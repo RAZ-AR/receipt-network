@@ -2,6 +2,9 @@
 // Single source of truth for the Expo app. Light-only for MVP (neumorphism
 // lives on a light surface; dark theme is a separate task).
 
+// expo-linear-gradient requires at least two colors as a tuple, not string[].
+export type GradientColors = readonly [string, string, ...string[]];
+
 export const colors = {
   // Neumorphic surface
   bg: "#EAEDF5",
@@ -20,14 +23,14 @@ export const colors = {
 // Holographic "unicorn" aura — use behind hero elements ONLY (goal ring,
 // result circle, avatar, onboarding orb). Render as a conic/blurred gradient
 // (expo-linear-gradient + masking, or an image), never as a page background.
-export const auraStops = [
+export const auraStops: GradientColors = [
   "#FFC9E2",
   "#FFE4C4",
   "#D6F7DB",
   "#C5E9FF",
   "#DFCFFF",
   "#FFC9E2",
-] as const;
+];
 
 // Progress-ring gradient (pink -> lilac -> blue)
 export const ringGradient = ["#FF9ECB", "#B99CFF", "#7FD4F5"] as const;
@@ -38,7 +41,10 @@ export const pastelFills = {
   blue: ["#C3ECFF", "#A8E8B4"],
   peach: ["#FFE4C4", "#FFB8A8"],
   lav: ["#DFCFFF", "#C3ECFF"],
-} as const;
+} as const satisfies Record<string, GradientColors>;
+
+// Rainbow used by the scan button and hero orbs.
+export const rainbow: GradientColors = ["#FFC9E2", "#FFE4C4", "#D6F7DB", "#C5E9FF", "#DFCFFF"];
 
 export const radii = { control: 14, card: 20, pill: 999 } as const;
 

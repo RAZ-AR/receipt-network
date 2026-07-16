@@ -16,7 +16,7 @@ export function OnboardingScreen({ onScan, onSignIn }: { onScan: () => void; onS
           <Aura size={210} style={{ top: -10, left: -10 }} />
           <NeoSurface radius={95} style={styles.orb}>
             <LinearGradient
-              colors={auraStops as unknown as string[]}
+              colors={auraStops}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.orbInner}

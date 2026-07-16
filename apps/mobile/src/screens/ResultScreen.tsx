@@ -6,11 +6,11 @@ import type { ReceiptResultState } from "@beleg/shared-types";
 import { NeoSurface } from "../components/NeoSurface";
 import { Aura } from "../components/Aura";
 import { GlassButton } from "../components/GlassButton";
-import { colors, fontFamily } from "../theme";
+import { colors, fontFamily, GradientColors } from "../theme";
 
 type Variant = {
-  auraColors: string[];
-  glyphColors: string[];
+  auraColors: GradientColors;
+  glyphColors: GradientColors;
   glyph: string;
   chipBg: string;
   chipText: string;

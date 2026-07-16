@@ -4,9 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { NeoSurface } from "../components/NeoSurface";
 import { Dock, DockTab } from "../components/Dock";
-import { colors, fontFamily } from "../theme";
+import { colors, fontFamily, GradientColors } from "../theme";
 
-const ROWS = [
+const ROWS: { name: string; when: string; status: string; ok: boolean; pts: string; sum: string; g: GradientColors }[] = [
   { name: "Kafeterija Central", when: "danas", status: "Potvrđeno", ok: true, pts: "+15", sum: "450 RSD", g: ["#D6F7DB", "#A8E8B4"] },
   { name: "Maxi · Novi Beograd", when: "juče", status: "Potvrđeno", ok: true, pts: "+40", sum: "1 620 RSD", g: ["#C5E9FF", "#93D3FA"] },
   { name: "Apoteka Beograd", when: "juče", status: "Provera", ok: false, pts: "u toku", sum: "312 RSD", g: ["#FBEBCF", "#F5D28A"] },

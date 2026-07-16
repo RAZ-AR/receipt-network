@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors, fontFamily } from "../theme";
+import { colors, fontFamily, rainbow } from "../theme";
 
 /**
  * QR-first scanner (ADR-P-013). The live camera feed will come from
@@ -39,7 +39,7 @@ export function ScannerScreen({ onClose, onScanned }: { onClose: () => void; onS
           <View style={styles.ctlBtn}><Text style={styles.ctlIcon}>▤</Text></View>
           <Pressable onPress={onScanned} style={styles.shutter}>
             <LinearGradient
-              colors={["#FFC9E2", "#FFE4C4", "#D6F7DB", "#C5E9FF", "#DFCFFF"]}
+              colors={rainbow}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}

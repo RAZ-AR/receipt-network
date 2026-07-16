@@ -5,9 +5,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { NeoSurface } from "../components/NeoSurface";
 import { Aura } from "../components/Aura";
 import { Dock, DockTab } from "../components/Dock";
-import { colors, fontFamily } from "../theme";
+import { colors, fontFamily, GradientColors } from "../theme";
 
-const TX = [
+const TX: { name: string; when: string; amount: string; positive: boolean; g: GradientColors }[] = [
   { name: "Kafeterija Central", when: "danas · 18:42", amount: "+15", positive: true, g: ["#D6F7DB", "#A8E8B4"] },
   { name: "Besplatni croissant", when: "juče · zamena", amount: "−250", positive: false, g: ["#FFD3E8", "#F5A8CB"] },
   { name: "Maxi · Novi Beograd", when: "juče · 2× akcija", amount: "+40", positive: true, g: ["#C5E9FF", "#93D3FA"] },

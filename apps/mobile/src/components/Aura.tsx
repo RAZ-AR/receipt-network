@@ -12,7 +12,7 @@ import { auraStops } from "../theme";
 export function Aura({ size, style }: { size: number; style?: ViewStyle }) {
   return (
     <LinearGradient
-      colors={auraStops as unknown as string[]}
+      colors={auraStops}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[

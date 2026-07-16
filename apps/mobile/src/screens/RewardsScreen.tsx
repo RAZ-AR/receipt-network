@@ -5,10 +5,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { NeoSurface } from "../components/NeoSurface";
 import { Aura } from "../components/Aura";
 import { Dock, DockTab } from "../components/Dock";
-import { colors, fontFamily } from "../theme";
+import { colors, fontFamily, GradientColors } from "../theme";
 import { MAX_ACTIVE_GOALS } from "@beleg/shared-types";
 
-const CATALOG = [
+const CATALOG: { name: string; vendor: string; cost: string; g: GradientColors; starred: boolean }[] = [
   { name: "Besplatna kafa", vendor: "Kaf. Central", cost: "100 p", g: ["#FFD3E8", "#D9CBFF"], starred: true },
   { name: "−15% Maxi", vendor: "Vaučer", cost: "300 p", g: ["#C3ECFF", "#A8E8B4"], starred: true },
   { name: "Croissant", vendor: "Trocadero", cost: "250 p", g: ["#FFE4C4", "#FFB8A8"], starred: true },

@@ -2,9 +2,9 @@ import React from "react";
 import { View, Pressable, Text, StyleSheet } from "react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors, fontFamily } from "../theme";
+import { colors, fontFamily, rainbow } from "../theme";
 
-export type DockTab = "Home" | "Wallet" | "Scan" | "Rewards" | "Profile";
+export type DockTab = "Home" | "Wallet" | "Scan" | "Rewards" | "History" | "Profile";
 
 /**
  * Liquid-glass bottom dock with a rainbow scan button in the middle.
@@ -18,7 +18,7 @@ export function Dock({
   active: Exclude<DockTab, "Scan">;
   onNavigate: (tab: DockTab) => void;
 }) {
-  const tabs: Exclude<DockTab, "Scan">[] = ["Home", "Wallet", "Rewards", "Profile"];
+  const tabs: Exclude<DockTab, "Scan">[] = ["Home", "Wallet", "Rewards", "History", "Profile"];
   return (
     <View style={styles.wrap}>
       <BlurView intensity={18} tint="light" style={StyleSheet.absoluteFill} />
@@ -28,7 +28,7 @@ export function Dock({
         ))}
         <Pressable onPress={() => onNavigate("Scan")} style={styles.scan}>
           <LinearGradient
-            colors={["#FFC9E2", "#FFE4C4", "#D6F7DB", "#C5E9FF", "#DFCFFF"]}
+            colors={rainbow}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
