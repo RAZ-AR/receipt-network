@@ -1,6 +1,7 @@
 // Theme surface for components. Re-exports the design tokens and adds a couple
 // of RN-specific helpers derived from them.
 export * from "./tokens";
+export * from "./layout";
 import { colors } from "./tokens";
 
 // Single-shadow approximation of the neumorphic raised look.
