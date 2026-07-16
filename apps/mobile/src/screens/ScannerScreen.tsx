@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
-import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from "react-native";
+import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { CameraView, useCameraPermissions, scanFromURLAsync } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { Dock, DockTab } from "../components/Dock";
 import { GlassButton } from "../components/GlassButton";
@@ -25,20 +25,52 @@ export function ScannerScreen({
   const [torch, setTorch] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
   const [seen, setSeen] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const camera = useRef<CameraView>(null);
   // Barcodes fire continuously — only act on the first valid one.
   const handled = useRef(false);
 
-  const onBarcode = ({ data }: { data: string }) => {
-    if (handled.current) return;
-    if (!isFiscalReceiptUrl(data)) {
-      // Show what was actually read: a rejected code is otherwise a silent
-      // dead end, and the raw value is what tells us why.
-      setSeen(data.slice(0, 90));
-      setHint("Ovo nije fiskalni QR kod sa računa.");
-      return;
-    }
+  const accept = (data: string) => {
     handled.current = true;
     onScanned(data);
+  };
+
+  const reject = (data: string) => {
+    // Show what was actually read: a rejected code is otherwise a silent
+    // dead end, and the raw value is what tells us why.
+    setSeen(data.slice(0, 90));
+    setHint("Ovo nije fiskalni QR kod sa računa.");
+  };
+
+  // Fast path: the live preview stream decodes simple codes instantly.
+  const onBarcode = ({ data }: { data: string }) => {
+    if (handled.current || busy) return;
+    if (!isFiscalReceiptUrl(data)) return reject(data);
+    accept(data);
+  };
+
+  /**
+   * Reliable path for the fiscal QR. It carries ~700 chars, so it is a very
+   * high-density code — the live preview runs at too low a resolution to
+   * resolve its modules. A full-resolution still does decode it.
+   */
+  const captureAndScan = async () => {
+    if (handled.current || busy) return;
+    setBusy(true);
+    setHint("Čitamo kod sa fotografije…");
+    try {
+      const photo = await camera.current?.takePictureAsync({ quality: 1, shutterSound: false });
+      if (!photo?.uri) throw new Error("no photo");
+      const found = await scanFromURLAsync(photo.uri, ["qr"]);
+      const hit = found.find((r) => isFiscalReceiptUrl(r.data));
+      if (hit) return accept(hit.data);
+      if (found.length > 0) return reject(found[0]!.data);
+      setHint("Nismo našli QR na fotografiji. Priđi bliže, tako da kod popuni okvir.");
+    } catch {
+      setHint("Nije uspelo čitanje. Pokušaj ponovo.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!permission) return <View style={styles.root} />;
@@ -62,8 +94,10 @@ export function ScannerScreen({
   return (
     <View style={styles.root}>
       <CameraView
+        ref={camera}
         style={StyleSheet.absoluteFill}
         facing="back"
+        mode="picture"
         // expo-camera defaults autofocus to "off" on iOS. A fiscal QR carries
         // ~700 chars, so it is dense: without focus the preview looks fine to
         // the eye but never resolves sharply enough to decode.
@@ -103,6 +137,19 @@ export function ScannerScreen({
             </View>
           ) : null}
         </View>
+
+        <View style={styles.shutterRow}>
+          <Pressable onPress={captureAndScan} disabled={busy} accessibilityLabel="Slikaj kod">
+            <View style={[styles.shutter, busy && styles.shutterBusy]}>
+              {busy ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Ionicons name="camera" size={s(28)} color="#fff" />
+              )}
+            </View>
+          </Pressable>
+          <Text style={styles.shutterHint}>Ne prepoznaje sam? Slikaj kod</Text>
+        </View>
       </SafeAreaView>
 
       <Dock onNavigate={onNavigate} />
@@ -129,7 +176,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: { fontFamily: fontFamily.bold, fontSize: s(13), color: "#fff" },
-  frameArea: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: DOCK_CLEARANCE },
+  frameArea: { flex: 1, alignItems: "center", justifyContent: "center" },
   frame: { width: FRAME, height: FRAME },
   corner: { position: "absolute", width: s(38), height: s(38), borderColor: "#8FD0F5" },
   tl: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: s(16) },
@@ -146,6 +193,25 @@ const styles = StyleSheet.create({
     lineHeight: s(19),
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowRadius: 6,
+  },
+  shutterRow: { alignItems: "center", paddingBottom: DOCK_CLEARANCE, gap: s(8) },
+  shutter: {
+    width: s(66),
+    height: s(66),
+    borderRadius: s(33),
+    backgroundColor: "rgba(255,255,255,0.22)",
+    borderWidth: 3,
+    borderColor: "rgba(255,255,255,0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shutterBusy: { opacity: 0.6 },
+  shutterHint: {
+    fontFamily: fontFamily.bold,
+    fontSize: s(11),
+    color: "rgba(255,255,255,0.9)",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowRadius: 5,
   },
   seenBox: {
     marginTop: s(12),
