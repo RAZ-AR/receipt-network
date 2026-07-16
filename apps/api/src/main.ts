@@ -1,15 +1,25 @@
 // Beleg API — modular monolith entrypoint (ADR-P-007).
-// Wires the domain-event core and registers modules. Kept intentionally
-// minimal: the first real work is the TaxCore verification spike (§4 of
-// IMPLEMENTATION_PLAN) which gates the Recognition/Verification modules.
+import { createHTTPServer } from "@trpc/server/adapters/standalone";
+import { appRouter } from "./router.js";
+import { createContext } from "./trpc.js";
 
-async function bootstrap(): Promise<void> {
-  // TODO(sprint-0):
-  //   - construct EventBus, Ledger, AuditLogger (core/)
-  //   - register modules (identity, receipt-capture, recognition, ...)
-  //   - expose tRPC router
-  //   - start HTTP server
-  console.log("Beleg API — scaffold. See IMPLEMENTATION_PLAN.md for the build order.");
-}
+const PORT = Number(process.env.PORT ?? 4000);
 
-void bootstrap();
+const server = createHTTPServer({
+  router: appRouter,
+  createContext,
+  // Dev only: the Expo app calls this from a phone on the same network.
+  middleware: (req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "*");
+    if (req.method === "OPTIONS") {
+      res.writeHead(200);
+      return res.end();
+    }
+    next();
+  },
+});
+
+server.listen(PORT);
+// Bind on all interfaces so a physical device can reach it over the LAN.
+console.log(`Beleg API on http://0.0.0.0:${PORT}`);
