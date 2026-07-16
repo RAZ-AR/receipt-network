@@ -10,6 +10,7 @@ import type { NativeStackNavigationProp, NativeStackScreenProps } from "@react-n
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
 import { ScannerScreen } from "./src/screens/ScannerScreen";
+import { ManualEntryScreen } from "./src/screens/ManualEntryScreen";
 import { ResultScreen } from "./src/screens/ResultScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { WalletScreen } from "./src/screens/WalletScreen";
@@ -22,7 +23,8 @@ type RootStackParamList = {
   Onboarding: undefined;
   Auth: undefined;
   Scanner: undefined;
-  Result: { receiptUrl?: string } | undefined;
+  ManualEntry: undefined;
+  Result: { receiptUrl?: string; pending?: boolean } | undefined;
   Home: undefined;
   Wallet: undefined;
   Rewards: undefined;
@@ -82,7 +84,19 @@ export default function App() {
               <ScannerScreen
                 onClose={() => navigation.goBack()}
                 onScanned={(receiptUrl) => navigation.replace("Result", { receiptUrl })}
+                onManualEntry={() => navigation.navigate("ManualEntry")}
                 onNavigate={dockNav(navigation)}
+              />
+            )}
+          </Stack.Screen>
+
+          <Stack.Screen name="ManualEntry">
+            {({ navigation }) => (
+              <ManualEntryScreen
+                onBack={() => navigation.goBack()}
+                // No auto-verification is possible: the tax authority's manual
+                // form is reCAPTCHA-protected, so this goes to review (FR-4).
+                onSubmit={() => navigation.replace("Result", { pending: true })}
               />
             )}
           </Stack.Screen>
@@ -91,6 +105,7 @@ export default function App() {
             {({ navigation, route }) => (
               <ResultScreen
                 receiptUrl={route.params?.receiptUrl}
+                initialState={route.params?.pending ? "PENDING_REVIEW" : undefined}
                 onContinue={() => navigation.reset({ index: 0, routes: [{ name: "Home" }] })}
                 onNavigate={dockNav(navigation)}
               />

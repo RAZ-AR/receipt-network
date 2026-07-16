@@ -24,10 +24,12 @@ import { colors, fontFamily, s, DOCK_CLEARANCE } from "../theme";
 export function ScannerScreen({
   onClose,
   onScanned,
+  onManualEntry,
   onNavigate,
 }: {
   onClose: () => void;
   onScanned: (url: string) => void;
+  onManualEntry: () => void;
   onNavigate: (tab: DockTab) => void;
 }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -144,8 +146,17 @@ export function ScannerScreen({
               <Text style={styles.actionText}>Precizni skener</Text>
             </Pressable>
             <Text style={styles.actionHint}>Za guste kodove sa računa</Text>
+            <Pressable onPress={onManualEntry} hitSlop={8}>
+              <Text style={styles.manualLink}>QR ne radi? Unesi broj računa ručno</Text>
+            </Pressable>
           </View>
-        ) : null}
+        ) : (
+          <View style={styles.actionRow}>
+            <Pressable onPress={onManualEntry} hitSlop={8}>
+              <Text style={styles.manualLink}>QR ne radi? Unesi broj računa ručno</Text>
+            </Pressable>
+          </View>
+        )}
       </SafeAreaView>
 
       <Dock onNavigate={onNavigate} />
@@ -205,6 +216,15 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bold,
     fontSize: s(11),
     color: "rgba(255,255,255,0.9)",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowRadius: 5,
+  },
+  manualLink: {
+    fontFamily: fontFamily.heavy,
+    fontSize: s(12.5),
+    color: "#fff",
+    textDecorationLine: "underline",
+    paddingVertical: s(6),
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowRadius: 5,
   },

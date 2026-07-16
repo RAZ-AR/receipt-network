@@ -31,6 +31,15 @@ const VARIANTS: Record<ReceiptResultState, Variant> = {
     title: "Hvala! Račun je primljen",
     cta: "Nastavi",
   },
+  PENDING_REVIEW: {
+    glyphColors: ["#C3ECFF", "#93C8F0"],
+    glyph: "⏳",
+    chipBg: "#DCEBF8",
+    chipText: "#2E6E9E",
+    chip: "Poslato na proveru",
+    title: "Račun je poslat na proveru",
+    cta: "U redu",
+  },
   QR_UNREADABLE: {
     glyphColors: ["#FFD9A8", "#F5BE7E"],
     glyph: "!",
@@ -74,14 +83,19 @@ const pointsFor = (total?: number) => (total ? Math.max(1, Math.round(total / 30
 
 export function ResultScreen({
   receiptUrl,
+  initialState,
   onContinue,
   onNavigate,
 }: {
   receiptUrl?: string;
+  /** Set directly when there is nothing to verify (e.g. manual entry). */
+  initialState?: ReceiptResultState;
   onContinue: () => void;
   onNavigate: (t: DockTab) => void;
 }) {
-  const [state, setState] = useState<ReceiptResultState | null>(receiptUrl ? null : "SUCCESS");
+  const [state, setState] = useState<ReceiptResultState | null>(
+    initialState ?? (receiptUrl ? null : "SUCCESS")
+  );
   const [receipt, setReceipt] = useState<VerifiedReceipt | null>(null);
 
   useEffect(() => {
@@ -128,6 +142,12 @@ export function ResultScreen({
         </View>
 
         <Text style={styles.title}>{v.title}</Text>
+
+        {state === "PENDING_REVIEW" && (
+          <Text style={styles.pendingText}>
+            Proveravamo podatke ručno. Poeni stižu čim potvrdimo račun — obavestićemo te.
+          </Text>
+        )}
 
         {state === "SUCCESS" && (
           <>
@@ -177,5 +197,14 @@ const styles = StyleSheet.create({
   cardLabel: { fontFamily: fontFamily.bold, fontSize: s(9.5), letterSpacing: 1, color: colors.ink2, textTransform: "uppercase" },
   ticketNum: { fontFamily: fontFamily.heavy, fontSize: s(19), color: colors.ink, letterSpacing: 1, marginTop: s(3) },
   receiptLine: { fontFamily: fontFamily.bold, fontSize: s(11.5), color: colors.ink2, marginTop: s(8) },
+  pendingText: {
+    fontFamily: fontFamily.regular,
+    fontSize: s(13),
+    color: colors.ink2,
+    textAlign: "center",
+    lineHeight: s(20),
+    marginTop: s(10),
+    maxWidth: s(290),
+  },
   foot: { paddingBottom: DOCK_CLEARANCE },
 });
