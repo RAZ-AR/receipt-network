@@ -206,9 +206,12 @@ enum TicketStatus {
   WON
 }
 
+// Periodic draw (monthly in MVP, ADR-P-014). Each period is its own Lottery
+// row; tickets belong to one draw and do not carry over to the next period.
 model Lottery {
   id           String        @id @default(cuid())
   type         String
+  period       String // e.g. "2026-07" — the draw period this lottery covers
   startAt      DateTime
   lockAt       DateTime
   drawAt       DateTime
@@ -216,6 +219,8 @@ model Lottery {
   rulesVersion String
 
   tickets LotteryTicket[]
+
+  @@unique([type, period])
 }
 
 model LotteryTicket {
@@ -276,6 +281,8 @@ model RewardClaim {
 }
 
 // ---------- Goal Engine ----------
+// A user may track up to MAX_ACTIVE_GOALS (3) ACTIVE goals at once (FR-11).
+// Enforced in the application layer, not by the schema.
 
 enum GoalStatus {
   ACTIVE

@@ -8,3 +8,14 @@ export type ReceiptResultState =
   | "INVALID"
   | "TOO_OLD"
   | "DUPLICATE";
+
+// Max reward-goals a user can track at once (FR-11, ADR-P-010).
+export const MAX_ACTIVE_GOALS = 3;
+
+// Rewards catalog filtering (FR-7).
+export interface RewardFilter {
+  category?: string;
+  businessId?: string;
+  maxPointsCost?: number;
+}
+
