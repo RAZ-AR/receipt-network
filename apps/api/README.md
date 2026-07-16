@@ -2,7 +2,9 @@
 
 Modular monolith backend for Beleg. See [IMPLEMENTATION_PLAN.md](../../IMPLEMENTATION_PLAN.md) for the build order and [PRODUCT_ARCHITECTURE.md](../../PRODUCT_ARCHITECTURE.md) for domain boundaries.
 
-> **Status:** scaffold only. No dependencies installed, no build verified yet. The stack (Node + tRPC + Prisma + Postgres) is recommended in the plan but **not yet fixed in an ADR** — confirm before building on it.
+> **Status:** running. Verified against a real Postgres and the real TaxCore endpoint: receipt verification, the 3-day rule, anti-duplicate and the points ledger all behave (see `scripts/e2e-receipt.ts`). Identity is not built yet — every request resolves to one dev user.
+>
+> The stack (Node + tRPC + Prisma + Postgres) is recommended in the plan but **not yet fixed in an ADR**.
 
 ## Layout
 
@@ -26,10 +28,24 @@ Domains talk to each other through `core/events`, not direct calls.
 
 ```bash
 pnpm install                      # from the repo root
-cp apps/api/.env.example apps/api/.env
-pnpm prisma:generate              # verified: schema is valid, client generates
-pnpm prisma:migrate               # needs a running Postgres
-pnpm api:dev
+brew install postgresql@16 && pnpm db:start
+createdb beleg
+cp apps/api/.env.example apps/api/.env   # then set your local user in DATABASE_URL
+pnpm prisma:migrate
+pnpm api:dev                      # http://localhost:4000
+```
+
+Run the API and the app in **two terminals** — `pnpm api:dev` here and
+`pnpm mobile:dev` there. They can't share one: Expo's menu (`i`, `a`, `r`,
+the QR prompt) needs a real terminal, and running it under `pnpm --parallel`
+leaves it without one ("Input is required, but 'npx expo' is in
+non-interactive mode").
+
+Quick check:
+
+```bash
+curl http://localhost:4000/health          # {"result":{"data":{"ok":true}}}
+npx tsx apps/api/scripts/e2e-receipt.ts    # full pipeline against real data
 ```
 
 ## First real work
