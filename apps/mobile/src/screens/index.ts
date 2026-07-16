@@ -6,7 +6,6 @@ export const TAB_SCREENS = [
   "Home",
   "Wallet",
   "Rewards",
-  "History",
   "Profile",
 ] as const;
 

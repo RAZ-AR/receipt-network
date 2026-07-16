@@ -14,7 +14,6 @@ import { ResultScreen } from "./src/screens/ResultScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { WalletScreen } from "./src/screens/WalletScreen";
 import { RewardsScreen } from "./src/screens/RewardsScreen";
-import { HistoryScreen } from "./src/screens/HistoryScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import type { DockTab } from "./src/components/Dock";
 import { colors, fontFamily } from "./src/theme";
@@ -27,7 +26,6 @@ type RootStackParamList = {
   Home: undefined;
   Wallet: undefined;
   Rewards: undefined;
-  History: undefined;
   Profile: undefined;
   Placeholder: { name: string };
 };
@@ -102,9 +100,6 @@ export default function App() {
           </Stack.Screen>
           <Stack.Screen name="Rewards">
             {({ navigation }) => <RewardsScreen onNavigate={dockNav(navigation)} />}
-          </Stack.Screen>
-          <Stack.Screen name="History">
-            {({ navigation }) => <HistoryScreen onNavigate={dockNav(navigation)} />}
           </Stack.Screen>
           <Stack.Screen name="Profile">
             {({ navigation }) => <ProfileScreen onNavigate={dockNav(navigation)} />}

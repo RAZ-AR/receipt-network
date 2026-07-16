@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { NeoSurface } from "../components/NeoSurface";
 import { Aura } from "../components/Aura";
+import { Segmented } from "../components/Segmented";
 import { ScreenLayout } from "../components/ScreenLayout";
 import type { DockTab } from "../components/Dock";
 import { colors, fontFamily, s, GradientColors } from "../theme";
@@ -33,10 +34,14 @@ export function RewardsScreen({ onNavigate }: { onNavigate: (t: DockTab) => void
       active="Rewards"
       onNavigate={onNavigate}
     >
-      <View style={styles.seg}>
-        <SegBtn label="Katalog" active={tab === "catalog"} onPress={() => setTab("catalog")} />
-        <SegBtn label="Srećke" active={tab === "lottery"} onPress={() => setTab("lottery")} />
-      </View>
+      <Segmented<"catalog" | "lottery">
+        options={[
+          { key: "catalog", label: "Katalog" },
+          { key: "lottery", label: "Srećke" },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
 
       {tab === "catalog" ? (
         <>
@@ -87,22 +92,9 @@ export function RewardsScreen({ onNavigate }: { onNavigate: (t: DockTab) => void
   );
 }
 
-function SegBtn({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={[styles.segBtn, active && styles.segBtnOn]}>
-      <Text style={[styles.segText, active && styles.segTextOn]}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   pill: { borderRadius: 999, paddingHorizontal: s(11), paddingVertical: s(5), backgroundColor: "#E7DCF7" },
   pillText: { fontFamily: fontFamily.heavy, fontSize: s(10.5), color: "#5A4470" },
-  seg: { flexDirection: "row", backgroundColor: colors.bg, borderRadius: s(14), padding: s(4), marginBottom: s(13), borderWidth: 1, borderColor: colors.track },
-  segBtn: { flex: 1, alignItems: "center", paddingVertical: s(10), borderRadius: s(11) },
-  segBtnOn: { backgroundColor: "#fff" },
-  segText: { fontFamily: fontFamily.heavy, fontSize: s(12.5), color: colors.ink2 },
-  segTextOn: { color: colors.ink },
   filterBtn: { flexDirection: "row", alignItems: "center", gap: s(7), alignSelf: "flex-start", borderRadius: 999, paddingHorizontal: s(13), paddingVertical: s(8), backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.track, marginBottom: s(13) },
   filterText: { fontFamily: fontFamily.heavy, fontSize: s(12), color: colors.ink },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: s(12) },
