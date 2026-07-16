@@ -64,6 +64,10 @@ export function ScannerScreen({
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
+        // expo-camera defaults autofocus to "off" on iOS. A fiscal QR carries
+        // ~700 chars, so it is dense: without focus the preview looks fine to
+        // the eye but never resolves sharply enough to decode.
+        autofocus="on"
         enableTorch={torch}
         barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
         onBarcodeScanned={onBarcode}
