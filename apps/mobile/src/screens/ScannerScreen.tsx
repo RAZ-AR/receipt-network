@@ -24,13 +24,17 @@ export function ScannerScreen({
   const [permission, requestPermission] = useCameraPermissions();
   const [torch, setTorch] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
+  const [seen, setSeen] = useState<string | null>(null);
   // Barcodes fire continuously — only act on the first valid one.
   const handled = useRef(false);
 
   const onBarcode = ({ data }: { data: string }) => {
     if (handled.current) return;
     if (!isFiscalReceiptUrl(data)) {
-      setHint("Ovo nije fiskalni QR kod. Probaj QR sa dna računa.");
+      // Show what was actually read: a rejected code is otherwise a silent
+      // dead end, and the raw value is what tells us why.
+      setSeen(data.slice(0, 90));
+      setHint("Ovo nije fiskalni QR kod sa računa.");
       return;
     }
     handled.current = true;
@@ -86,6 +90,14 @@ export function ScannerScreen({
           <Text style={styles.hint}>
             {hint ?? "Uperi kameru u fiskalni QR — Beleg ga proverava kod TaxCore za par sekundi."}
           </Text>
+          {seen ? (
+            <View style={styles.seenBox}>
+              <Text style={styles.seenLabel}>Pročitano</Text>
+              <Text style={styles.seenText} numberOfLines={3}>
+                {seen}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </SafeAreaView>
 
@@ -131,6 +143,23 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowRadius: 6,
   },
+  seenBox: {
+    marginTop: s(12),
+    marginHorizontal: s(24),
+    paddingVertical: s(9),
+    paddingHorizontal: s(12),
+    borderRadius: s(12),
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  seenLabel: {
+    fontFamily: fontFamily.bold,
+    fontSize: s(9),
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: "rgba(255,255,255,0.65)",
+    marginBottom: s(3),
+  },
+  seenText: { fontFamily: fontFamily.regular, fontSize: s(10.5), color: "#fff" },
   permWrap: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", padding: s(28), gap: s(10) },
   permTitle: { fontFamily: fontFamily.heavy, fontSize: s(19), color: colors.ink, marginTop: s(8) },
   permText: { fontFamily: fontFamily.regular, fontSize: s(13), color: colors.ink2, textAlign: "center", lineHeight: s(20) },

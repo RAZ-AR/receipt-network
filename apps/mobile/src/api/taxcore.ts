@@ -11,6 +11,14 @@
 
 const SUF_HOST = "suf.purs.gov.rs";
 
+/**
+ * Matches a fiscal receipt verification URL without relying on the URL class:
+ * React Native's URL is a regex-based shim, so this stays explicit and
+ * tolerant — any suf.purs.gov.rs host (incl. subdomains like tap.), any case,
+ * and the `vl` payload in any query position.
+ */
+const SUF_URL_RE = /^https?:\/\/(?:[\w-]+\.)*suf\.purs\.gov\.rs\/[^\s]*[?&]vl=/i;
+
 export interface VerifiedReceipt {
   isValid: boolean;
   invoiceNumber?: string;
@@ -21,12 +29,7 @@ export interface VerifiedReceipt {
 
 /** True if a scanned barcode looks like a Serbian fiscal receipt QR. */
 export function isFiscalReceiptUrl(value: string): boolean {
-  try {
-    const u = new URL(value);
-    return u.host === SUF_HOST && !!u.searchParams.get("vl");
-  } catch {
-    return false;
-  }
+  return SUF_URL_RE.test(value.trim());
 }
 
 /** Merchant name sits in the plain-text journal, not in the structured fields. */
@@ -39,7 +42,8 @@ function merchantFromJournal(journal: string): string | undefined {
   return header >= 0 ? lines[header + 2] : undefined;
 }
 
-export async function verifyReceipt(url: string): Promise<VerifiedReceipt> {
+export async function verifyReceipt(rawUrl: string): Promise<VerifiedReceipt> {
+  const url = rawUrl.trim();
   if (!isFiscalReceiptUrl(url)) {
     throw new Error("Nije fiskalni QR kod");
   }
