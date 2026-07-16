@@ -55,17 +55,17 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: DockTab) => void 
         </NeoSurface>
       ))}
 
-      <Text style={styles.section}>Srećke i danas</Text>
+      <Text style={styles.section}>Danas</Text>
       <View style={styles.duo}>
         <NeoSurface radius={s(18)} style={styles.duoCard}>
-          <Text style={styles.duoLabel}>Srećke</Text>
-          <Text style={styles.duoValue}>7</Text>
-          <Text style={styles.duoSub}>izvlačenje za 15 dana</Text>
-        </NeoSurface>
-        <NeoSurface radius={s(18)} style={styles.duoCard}>
-          <Text style={styles.duoLabel}>Danas</Text>
+          <Text style={styles.duoLabel}>Ponuda dana</Text>
           <Text style={styles.duoValue}>2×</Text>
           <Text style={styles.duoSub}>poeni kod Maxi</Text>
+        </NeoSurface>
+        <NeoSurface radius={s(18)} style={styles.duoCard}>
+          <Text style={styles.duoLabel}>Uskoro</Text>
+          <Text style={styles.duoValue}>🎁</Text>
+          <Text style={styles.duoSub}>iznenađenje se sprema</Text>
         </NeoSurface>
       </View>
 

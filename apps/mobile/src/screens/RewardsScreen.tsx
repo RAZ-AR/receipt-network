@@ -17,10 +17,8 @@ const CATALOG: { name: string; vendor: string; cost: string; g: GradientColors; 
   { name: "Bioskop", vendor: "Cineplexx", cost: "800 p", g: ["#DFCFFF", "#C3ECFF"], starred: false },
 ];
 
-const TICKETS = ["BG2200777", "BG2200781", "BG2200794", "BG2200803", "BG2200818", "BG2200826"];
-
 export function RewardsScreen({ onNavigate }: { onNavigate: (t: DockTab) => void }) {
-  const [tab, setTab] = useState<"catalog" | "lottery">("catalog");
+  const [tab, setTab] = useState<"catalog" | "soon">("catalog");
   const starred = CATALOG.filter((r) => r.starred).length;
 
   return (
@@ -28,16 +26,16 @@ export function RewardsScreen({ onNavigate }: { onNavigate: (t: DockTab) => void
       title="Nagrade"
       headerRight={
         <View style={styles.pill}>
-          <Text style={styles.pillText}>{tab === "catalog" ? "1 240 p" : "jul 2026"}</Text>
+          <Text style={styles.pillText}>{tab === "catalog" ? "1 240 p" : "🎁"}</Text>
         </View>
       }
       active="Rewards"
       onNavigate={onNavigate}
     >
-      <Segmented<"catalog" | "lottery">
+      <Segmented<"catalog" | "soon">
         options={[
           { key: "catalog", label: "Katalog" },
-          { key: "lottery", label: "Srećke" },
+          { key: "soon", label: "Uskoro" },
         ]}
         value={tab}
         onChange={setTab}
@@ -67,26 +65,16 @@ export function RewardsScreen({ onNavigate }: { onNavigate: (t: DockTab) => void
           </View>
         </>
       ) : (
-        <>
-          <View style={styles.countWrap}>
-            <Aura size={s(128)} />
-            <Text style={styles.countNum}>7</Text>
-            <Text style={styles.countUnit}>srećaka ovog meseca</Text>
+        <View style={styles.soon}>
+          <View style={styles.soonOrb}>
+            <Aura size={s(150)} />
+            <Ionicons name="gift" size={s(46)} color="#8B6FC0" />
           </View>
-          <NeoSurface radius={s(14)} style={styles.periodNote}>
-            <Text style={styles.periodText}>
-              Učestvuju samo srećke iz jula. Posle izvlačenja (31.7) se ne prenose.
-            </Text>
-          </NeoSurface>
-          <Text style={styles.numLabel}>Tvoji brojevi</Text>
-          <View style={styles.numGrid}>
-            {TICKETS.map((n) => (
-              <NeoSurface key={n} radius={s(13)} style={styles.numChip}>
-                <Text style={styles.numText}>{n}</Text>
-              </NeoSurface>
-            ))}
-          </View>
-        </>
+          <Text style={styles.soonTitle}>Uskoro — iznenađenje</Text>
+          <Text style={styles.soonText}>
+            Spremamo nešto posebno za tvoje skenirane račune. Nastavi da skupljaš poene — biće ti od koristi.
+          </Text>
+        </View>
       )}
     </ScreenLayout>
   );
@@ -107,13 +95,15 @@ const styles = StyleSheet.create({
   rcost: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   rprice: { fontFamily: fontFamily.heavy, fontSize: s(13.5), color: colors.ink },
   rgoal: { fontFamily: fontFamily.bold, fontSize: s(10), color: "#3E7D68" },
-  countWrap: { alignItems: "center", justifyContent: "center", paddingVertical: s(14), marginBottom: s(6) },
-  countNum: { fontFamily: fontFamily.heavy, fontSize: s(56), color: colors.ink, letterSpacing: -1.5 },
-  countUnit: { fontFamily: fontFamily.bold, fontSize: s(11.5), letterSpacing: 0.5, textTransform: "uppercase", color: colors.ink2 },
-  periodNote: { padding: s(12), marginBottom: s(14) },
-  periodText: { fontFamily: fontFamily.regular, fontSize: s(11.5), color: colors.ink2, lineHeight: s(17) },
-  numLabel: { fontFamily: fontFamily.bold, fontSize: s(10), letterSpacing: 1, textTransform: "uppercase", color: colors.ink2, marginBottom: s(8) },
-  numGrid: { flexDirection: "row", flexWrap: "wrap", gap: s(8) },
-  numChip: { width: "47%", paddingVertical: s(11), paddingHorizontal: s(12) },
-  numText: { fontFamily: fontFamily.heavy, fontSize: s(12), color: colors.ink, letterSpacing: 0.5 },
+  soon: { alignItems: "center", justifyContent: "center", paddingTop: s(40), paddingHorizontal: s(20) },
+  soonOrb: { width: s(150), height: s(150), alignItems: "center", justifyContent: "center", marginBottom: s(22) },
+  soonTitle: { fontFamily: fontFamily.heavy, fontSize: s(20), color: colors.ink, marginBottom: s(10) },
+  soonText: {
+    fontFamily: fontFamily.regular,
+    fontSize: s(13.5),
+    color: colors.ink2,
+    textAlign: "center",
+    lineHeight: s(21),
+    maxWidth: s(290),
+  },
 });

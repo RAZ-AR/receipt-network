@@ -157,16 +157,15 @@ export function ResultScreen({
               <Text style={styles.points}>+{points ?? 0}</Text>
               <Text style={styles.pointsUnit}>poena</Text>
             </View>
-            <NeoSurface radius={s(18)} style={styles.card}>
-              <Text style={styles.cardLabel}>Tvoj broj srećke</Text>
-              <Text style={styles.ticketNum}>BG2200777</Text>
-              {receipt?.merchant ? (
-                <Text style={styles.receiptLine}>
-                  {receipt.merchant}
-                  {receipt.totalAmount ? ` · ${receipt.totalAmount} RSD` : ""}
-                </Text>
-              ) : null}
-            </NeoSurface>
+            {receipt?.merchant || receipt?.totalAmount ? (
+              <NeoSurface radius={s(18)} style={styles.card}>
+                <Text style={styles.cardLabel}>Račun</Text>
+                {receipt.merchant ? <Text style={styles.merchant}>{receipt.merchant}</Text> : null}
+                {receipt.totalAmount ? (
+                  <Text style={styles.receiptLine}>{receipt.totalAmount} RSD · potvrđeno kod TaxCore</Text>
+                ) : null}
+              </NeoSurface>
+            ) : null}
           </>
         )}
       </View>
@@ -197,7 +196,7 @@ const styles = StyleSheet.create({
   pointsUnit: { fontFamily: fontFamily.heavy, fontSize: s(16), color: colors.ink2, marginBottom: s(8) },
   card: { width: "100%", padding: s(16) },
   cardLabel: { fontFamily: fontFamily.bold, fontSize: s(9.5), letterSpacing: 1, color: colors.ink2, textTransform: "uppercase" },
-  ticketNum: { fontFamily: fontFamily.heavy, fontSize: s(19), color: colors.ink, letterSpacing: 1, marginTop: s(3) },
+  merchant: { fontFamily: fontFamily.heavy, fontSize: s(16), color: colors.ink, marginTop: s(4) },
   receiptLine: { fontFamily: fontFamily.bold, fontSize: s(11.5), color: colors.ink2, marginTop: s(8) },
   pendingText: {
     fontFamily: fontFamily.regular,

@@ -7,10 +7,12 @@ import { ScreenLayout } from "../components/ScreenLayout";
 import type { DockTab } from "../components/Dock";
 import { colors, fontFamily, s } from "../theme";
 
+// Lottery is on hold, so no ticket count here. These are still placeholders
+// until the profile is wired to the API.
 const STATS = [
   { v: "54", l: "računa" },
   { v: "1 240", l: "poena" },
-  { v: "7", l: "srećaka" },
+  { v: "3", l: "nagrade" },
 ];
 
 const SETTINGS: { icon: keyof typeof Ionicons.glyphMap; name: string; right: string }[] = [
