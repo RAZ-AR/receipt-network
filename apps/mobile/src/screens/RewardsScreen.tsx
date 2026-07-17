@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { NeoSurface } from "../components/NeoSurface";
@@ -9,24 +9,69 @@ import { ScreenLayout } from "../components/ScreenLayout";
 import type { DockTab } from "../components/Dock";
 import { colors, fontFamily, s, GradientColors } from "../theme";
 import { MAX_ACTIVE_GOALS } from "@beleg/shared-types";
+import { api } from "../api/client";
 
-const CATALOG: { name: string; vendor: string; cost: string; g: GradientColors; starred: boolean }[] = [
-  { name: "Besplatna kafa", vendor: "Kaf. Central", cost: "100 p", g: ["#FFD3E8", "#D9CBFF"], starred: true },
-  { name: "−15% Maxi", vendor: "Vaučer", cost: "300 p", g: ["#C3ECFF", "#A8E8B4"], starred: true },
-  { name: "Croissant", vendor: "Trocadero", cost: "250 p", g: ["#FFE4C4", "#FFB8A8"], starred: true },
-  { name: "Bioskop", vendor: "Cineplexx", cost: "800 p", g: ["#DFCFFF", "#C3ECFF"], starred: false },
+type Catalog = {
+  balance: number;
+  rewards: {
+    id: string;
+    title: string;
+    pointsCost: number;
+    vendor: string | null;
+    affordable: boolean;
+    remaining: number;
+  }[];
+};
+
+// Thumbnails are decorative; the catalog has no images yet.
+const THUMBS: GradientColors[] = [
+  ["#FFD3E8", "#D9CBFF"],
+  ["#C3ECFF", "#A8E8B4"],
+  ["#FFE4C4", "#FFB8A8"],
+  ["#DFCFFF", "#C3ECFF"],
 ];
 
 export function RewardsScreen({ onNavigate }: { onNavigate: (t: DockTab) => void }) {
   const [tab, setTab] = useState<"catalog" | "soon">("catalog");
-  const starred = CATALOG.filter((r) => r.starred).length;
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = () => {
+    api.rewards.list
+      .query()
+      .then(setCatalog)
+      .catch(() => setFailed(true));
+  };
+  useEffect(load, []);
+
+  const redeem = async (id: string, title: string) => {
+    setBusy(id);
+    try {
+      const r = await api.rewards.redeem.mutate({ rewardId: id });
+      if (r.state === "SUCCESS") {
+        Alert.alert(title, `Tvoj kod: ${r.code}\n\nPokaži ga na kasi. Važi 14 dana.`);
+        load();
+      } else if (r.state === "INSUFFICIENT") {
+        Alert.alert("Nedovoljno poena", `Nedostaje još ${r.needed} poena.`);
+      } else if (r.state === "OUT_OF_STOCK") {
+        Alert.alert("Nema više", "Ova nagrada je trenutno rasprodata.");
+      } else {
+        Alert.alert("Nedostupno", "Ova nagrada trenutno nije dostupna.");
+      }
+    } catch {
+      Alert.alert("Greška", "Server nije dostupan.");
+    } finally {
+      setBusy(null);
+    }
+  };
 
   return (
     <ScreenLayout
       title="Nagrade"
       headerRight={
         <View style={styles.pill}>
-          <Text style={styles.pillText}>{tab === "catalog" ? "1 240 p" : "🎁"}</Text>
+          <Text style={styles.pillText}>{tab === "catalog" ? `${catalog?.balance ?? 0} p` : "🎁"}</Text>
         </View>
       }
       active="Rewards"
@@ -43,22 +88,27 @@ export function RewardsScreen({ onNavigate }: { onNavigate: (t: DockTab) => void
 
       {tab === "catalog" ? (
         <>
-          <Pressable style={styles.filterBtn}>
-            <Ionicons name="options-outline" size={s(15)} color={colors.ink} />
-            <Text style={styles.filterText}>Filteri</Text>
-          </Pressable>
+          {!catalog && !failed ? <ActivityIndicator color={colors.ink2} style={{ marginTop: s(30) }} /> : null}
+          {failed ? <Text style={styles.err}>Server nije dostupan.</Text> : null}
           <View style={styles.grid}>
-            {CATALOG.map((r) => (
-              <NeoSurface key={r.name} radius={s(18)} style={styles.rcard}>
-                <View style={[styles.star, r.starred && styles.starOn]}>
-                  <Ionicons name={r.starred ? "star" : "star-outline"} size={s(13)} color={r.starred ? "#fff" : colors.ink2} />
-                </View>
-                <LinearGradient colors={r.g} style={styles.thumb} />
-                <Text style={styles.rname}>{r.name}</Text>
-                <Text style={styles.rvendor}>{r.vendor}</Text>
+            {catalog?.rewards.map((r, i) => (
+              <NeoSurface key={r.id} radius={s(18)} style={styles.rcard}>
+                <LinearGradient colors={THUMBS[i % THUMBS.length]!} style={styles.thumb} />
+                <Text style={styles.rname}>{r.title}</Text>
+                <Text style={styles.rvendor}>{r.vendor ?? "Beleg"}</Text>
                 <View style={styles.rcost}>
-                  <Text style={styles.rprice}>{r.cost}</Text>
-                  <Text style={styles.rgoal}>{r.starred ? "cilj ✓" : `${starred}/${MAX_ACTIVE_GOALS}`}</Text>
+                  <Text style={styles.rprice}>{r.pointsCost} p</Text>
+                  {r.affordable ? (
+                    <Pressable onPress={() => redeem(r.id, r.title)} disabled={busy === r.id} style={styles.take}>
+                      {busy === r.id ? (
+                        <ActivityIndicator size="small" color="#3E7D68" />
+                      ) : (
+                        <Text style={styles.takeText}>Uzmi</Text>
+                      )}
+                    </Pressable>
+                  ) : (
+                    <Text style={styles.rgoal}>još {r.remaining}</Text>
+                  )}
                 </View>
               </NeoSurface>
             ))}
@@ -83,7 +133,9 @@ export function RewardsScreen({ onNavigate }: { onNavigate: (t: DockTab) => void
 const styles = StyleSheet.create({
   pill: { borderRadius: 999, paddingHorizontal: s(11), paddingVertical: s(5), backgroundColor: "#E7DCF7" },
   pillText: { fontFamily: fontFamily.heavy, fontSize: s(10.5), color: "#5A4470" },
-  filterBtn: { flexDirection: "row", alignItems: "center", gap: s(7), alignSelf: "flex-start", borderRadius: 999, paddingHorizontal: s(13), paddingVertical: s(8), backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.track, marginBottom: s(13) },
+  err: { fontFamily: fontFamily.bold, fontSize: s(12.5), color: "#A24E6C", textAlign: "center", marginTop: s(24) },
+  take: { borderRadius: 999, paddingHorizontal: s(12), paddingVertical: s(5), backgroundColor: "#E4F6EC" },
+  takeText: { fontFamily: fontFamily.heavy, fontSize: s(11), color: "#3E7D68" },
   filterText: { fontFamily: fontFamily.heavy, fontSize: s(12), color: colors.ink },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: s(12) },
   rcard: { width: "47%", padding: s(11) },

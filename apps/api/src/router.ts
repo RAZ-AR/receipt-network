@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "./trpc.js";
 import { submitReceipt } from "./modules/receipts/submit.js";
+import { redeemReward } from "./modules/rewards/redeem.js";
 
 export const appRouter = router({
   health: publicProcedure.query(() => ({ ok: true })),
@@ -14,6 +15,57 @@ export const appRouter = router({
     submit: protectedProcedure
       .input(z.object({ receiptUrl: z.string().url() }))
       .mutation(({ ctx, input }) => submitReceipt(ctx.db, ctx.userId, input.receiptUrl)),
+  }),
+
+  rewards: router({
+    /** Catalog with the viewer's affordability worked out server-side. */
+    list: protectedProcedure
+      .input(z.object({ maxPointsCost: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const account = await ctx.db.pointsAccount.findUnique({ where: { userId: ctx.userId } });
+        const balance = account?.balance ?? 0;
+
+        const rewards = await ctx.db.reward.findMany({
+          where: {
+            status: "ACTIVE",
+            ...(input?.maxPointsCost ? { pointsCost: { lte: input.maxPointsCost } } : {}),
+          },
+          orderBy: { pointsCost: "asc" },
+          include: { business: { select: { displayName: true } } },
+        });
+
+        return {
+          balance,
+          rewards: rewards.map((r) => ({
+            id: r.id,
+            title: r.title,
+            pointsCost: r.pointsCost,
+            stock: r.stock,
+            vendor: r.business?.displayName ?? null,
+            affordable: balance >= r.pointsCost,
+            remaining: Math.max(0, r.pointsCost - balance),
+          })),
+        };
+      }),
+
+    redeem: protectedProcedure
+      .input(z.object({ rewardId: z.string() }))
+      .mutation(({ ctx, input }) => redeemReward(ctx.db, ctx.userId, input.rewardId)),
+
+    claims: protectedProcedure.query(async ({ ctx }) => {
+      const claims = await ctx.db.rewardClaim.findMany({
+        where: { userId: ctx.userId },
+        orderBy: { id: "desc" },
+        include: { reward: { select: { title: true } } },
+      });
+      return claims.map((c) => ({
+        id: c.id,
+        code: c.code,
+        status: c.status,
+        title: c.reward.title,
+        expiresAt: c.expiresAt?.toISOString() ?? null,
+      }));
+    }),
   }),
 
   wallet: router({
